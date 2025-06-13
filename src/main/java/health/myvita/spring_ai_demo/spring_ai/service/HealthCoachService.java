@@ -50,8 +50,8 @@ public class HealthCoachService {
         // Configure the chat client for health coaching using GPT-4 mini
         this.chatClient = chatClientBuilder
                 .defaultOptions(OpenAiChatOptions.builder()
-                        .model(OpenAiApi.ChatModel.GPT_4_O_MINI.getValue())
-                        .temperature(0.7)  // Higher temperature for more conversational responses
+                        .model(OpenAiApi.ChatModel.GPT_4_1_MINI.getValue())
+                        .temperature(0.1)  // Low temperature for consistent analysis
                         .build())
                 .build();
         
@@ -69,17 +69,10 @@ public class HealthCoachService {
             logger.info("Processing health coaching request");
             logger.debug("User message: {}", userMessage);
             
-            // Create chat options for this specific request
-            OpenAiChatOptions requestOptions = OpenAiChatOptions.builder()
-                    .model(OpenAiApi.ChatModel.GPT_4_O_MINI.getValue())
-                    .temperature(0.7)  // Slightly higher temperature for conversational responses
-                    .maxTokens(800)
-                    .build();
-            
+            // Use the default GPT_4_O_MINI model configured in the constructor
             String response = chatClient.prompt()
-                    .options(requestOptions)
-                    .user(userMessage)
-                    .user("Please provide your response in a structured format:\\n" +
+                    .system(SYSTEM_PROMPT)
+                    .user(userMessage + "\\n\\nPlease provide your response in a structured format:\\n" +
                           "\\n" +
                           "Summary: [Brief summary of what the user is experiencing]\\n" +
                           "\\n" +

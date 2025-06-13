@@ -24,6 +24,8 @@ public class FoodAnalysisService {
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
     
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FoodAnalysisService.class);
+    
     // System prompt for food analysis
     private static final String SYSTEM_PROMPT = 
         "You are a professional nutritionist and food analysis expert. " +
@@ -36,8 +38,8 @@ public class FoodAnalysisService {
         // Configure the chat client for vision analysis using GPT-4o
         this.chatClient = chatClientBuilder
                 .defaultOptions(OpenAiChatOptions.builder()
-                        .model(OpenAiApi.ChatModel.GPT_4_O.getValue())
-                        .temperature(0.2)  // Low temperature for consistent analysis
+                        .model(OpenAiApi.ChatModel.GPT_4_1_MINI.getValue())
+                        .temperature(0.1)  // Low temperature for consistent analysis
                         .build())
                 .build();
         
@@ -53,8 +55,10 @@ public class FoodAnalysisService {
      */
     public NutritionAnalysisResponse analyzeFood(MultipartFile imageFile) throws Exception {
         try {
+            // Determine mime type (default to image/jpeg if unknown)
+            String mimeString = imageFile.getContentType() != null ? imageFile.getContentType() : MimeTypeUtils.IMAGE_JPEG_VALUE;
             // Create media object from the uploaded file
-            Media imageMedia = new Media(MimeTypeUtils.IMAGE_JPEG, imageFile.getResource());
+            Media imageMedia = new Media(MimeTypeUtils.parseMimeType(mimeString), imageFile.getResource());
             
             // Create the analysis prompt
             String analysisPrompt = 
@@ -89,6 +93,9 @@ public class FoodAnalysisService {
                     .user(u -> u.text(analysisPrompt).media(imageMedia))
                     .call()
                     .content();
+            
+            // Log the raw response from the model for debugging
+            logger.info("Raw food analysis response:\n{}", response);
             
             // Parse the JSON response into our DTO
             return parseNutritionResponse(response);
@@ -133,6 +140,7 @@ public class FoodAnalysisService {
     private NutritionAnalysisResponse createFallbackResponse() {
         NutritionAnalysisResponse response = new NutritionAnalysisResponse();
         response.setTotalEstimatedCaloriesKcal(0);
+        response.setFoodItems(java.util.Collections.emptyList());
         // Set other default values as needed
         return response;
     }

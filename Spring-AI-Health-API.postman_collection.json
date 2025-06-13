@@ -1,0 +1,342 @@
+{
+  "info": {
+    "name": "Spring AI Health API",
+    "description": "Comprehensive test collection for Spring AI Health application with GPT-4 Vision, Health Coach, and Report Generation endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Coach API",
+      "item": [
+        {
+          "name": "Basic Symptom Analysis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptoms\": \"I have been experiencing headaches and fatigue for the past 3 days. I also feel dizzy when I stand up quickly.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/coach/advice",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "coach", "advice"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has required fields\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('summary');",
+                  "    pm.expect(jsonData).to.have.property('possibleCauses');",
+                  "    pm.expect(jsonData).to.have.property('tips');",
+                  "    pm.expect(jsonData).to.have.property('urgencyLevel');",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is less than 30 seconds\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(30000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Digestive Issues",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptoms\": \"I have stomach pain after eating, bloating, and occasional nausea. This has been happening for about a week.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/coach/advice",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "coach", "advice"]
+            }
+          }
+        },
+        {
+          "name": "Sleep Problems",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptoms\": \"I can't fall asleep at night, I wake up frequently, and I feel tired during the day despite being in bed for 8 hours.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/coach/advice",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "coach", "advice"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Food Analysis API",
+      "item": [
+        {
+          "name": "Upload Food Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "description": "Upload a food image (JPG, PNG, etc.)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/food/analyze",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "food", "analyze"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has food analysis data\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('foodItems');",
+                  "    pm.expect(jsonData).to.have.property('totalEstimatedCaloriesKcal');",
+                  "    pm.expect(jsonData.foodItems).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Food items have required properties\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.foodItems.length > 0) {",
+                  "        const firstItem = jsonData.foodItems[0];",
+                  "        pm.expect(firstItem).to.have.property('name');",
+                  "        pm.expect(firstItem).to.have.property('calories');",
+                  "        pm.expect(firstItem).to.have.property('confidence');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Health Reports API",
+      "item": [
+        {
+          "name": "Weekly Health Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user123\",\n  \"reportType\": \"weekly\",\n  \"metrics\": {\n    \"averageCaloriesPerDay\": 2200,\n    \"averageStepsPerDay\": 8500,\n    \"averageSleepHours\": 7.5,\n    \"workoutDays\": 4,\n    \"waterIntakeLiters\": 2.5,\n    \"mood\": \"good\",\n    \"energyLevel\": \"high\",\n    \"stressLevel\": \"medium\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "generate"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is a valid health report\", function () {",
+                  "    const responseText = pm.response.text();",
+                  "    pm.expect(responseText).to.include('Health Report');",
+                  "    pm.expect(responseText.length).to.be.above(100);",
+                  "});",
+                  "",
+                  "pm.test(\"Report contains analysis sections\", function () {",
+                  "    const responseText = pm.response.text();",
+                  "    pm.expect(responseText).to.include('Summary');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Monthly Health Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user456\",\n  \"reportType\": \"monthly\",\n  \"metrics\": {\n    \"averageCaloriesPerDay\": 2100,\n    \"averageStepsPerDay\": 9200,\n    \"averageSleepHours\": 7.8,\n    \"workoutDays\": 16,\n    \"waterIntakeLiters\": 2.8,\n    \"mood\": \"excellent\",\n    \"energyLevel\": \"high\",\n    \"stressLevel\": \"low\",\n    \"weightChange\": \"-2.5kg\",\n    \"bloodPressure\": \"120/80\",\n    \"heartRate\": 65\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Batch Health Reports",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requests\": [\n    {\n      \"userId\": \"user001\",\n      \"reportType\": \"weekly\",\n      \"metrics\": {\n        \"averageCaloriesPerDay\": 2000,\n        \"averageStepsPerDay\": 7500,\n        \"averageSleepHours\": 7.0,\n        \"workoutDays\": 3,\n        \"waterIntakeLiters\": 2.0,\n        \"mood\": \"fair\",\n        \"energyLevel\": \"medium\",\n        \"stressLevel\": \"high\"\n      }\n    },\n    {\n      \"userId\": \"user002\",\n      \"reportType\": \"weekly\",\n      \"metrics\": {\n        \"averageCaloriesPerDay\": 2300,\n        \"averageStepsPerDay\": 9000,\n        \"averageSleepHours\": 8.0,\n        \"workoutDays\": 5,\n        \"waterIntakeLiters\": 2.7,\n        \"mood\": \"good\",\n        \"energyLevel\": \"high\",\n        \"stressLevel\": \"low\"\n      }\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/batch",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "batch"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Testing",
+      "item": [
+        {
+          "name": "Missing Required Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invalidField\": \"test\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/coach/advice",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "coach", "advice"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Empty Symptoms",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptoms\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/coach/advice",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "coach", "advice"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Set timestamp for request tracking",
+          "pm.globals.set(\"timestamp\", new Date().toISOString());",
+          "",
+          "// Log request details",
+          "console.log(\"Making request to: \" + pm.request.url);",
+          "console.log(\"Request method: \" + pm.request.method);"
+        ]
+      }
+    }
+  ]
+} 
