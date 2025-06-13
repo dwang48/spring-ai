@@ -1,0 +1,61 @@
+Provide a detailed nutritional analysis for a {age} year old {gender} with:
+Weight: {weight}kg
+Height: {height}cm
+Health conditions: {health_conditions}
+Dietary preference: {dietary_preference}
+Allergies: {allergies}
+Health goals: {health_goals}
+
+Food details:
+Name: {name}
+Brand: {brand}
+Food groups: {dietary_info[food_groups]}
+Categories: {dietary_info[categories]}
+Origin: {dietary_info[origins]}
+
+Nutrition per 100g:
+Energy: {nutrition[energy_kcal_100g]} kcal
+Protein: {nutrition[proteins_100g]}g
+Carbohydrates: {nutrition[carbohydrates_100g]}g
+Sugars: {nutrition[sugars_100g]}g
+Fat: {nutrition[fat_100g]}g
+Saturated fat: {nutrition[saturated_fat_100g]}g
+Fiber: {nutrition[fiber_100g]}g
+Salt: {nutrition[salt_100g]}g
+
+Minerals:
+Calcium: {nutrition[calcium_100g]}mg
+Iron: {nutrition[iron_100g]}mg
+Magnesium: {nutrition[magnesium_100g]}mg
+Potassium: {nutrition[potassium_100g]}mg
+
+Vitamins:
+Vitamin A: {nutrition[vitamin_a_100g]}μg
+Vitamin C: {nutrition[vitamin_c_100g]}mg
+Vitamin D: {nutrition[vitamin_d_100g]}μg
+Vitamin E: {nutrition[vitamin_e_100g]}mg
+
+Quality Scores:
+Nutri-score: {nutrition_scores[nutriscore_grade]}
+NOVA group: {nutrition_scores[nova_group]}
+Eco-score: {environmental_impact[ecoscore_grade]}
+Environmental impact: {environmental_impact[impact_level]}
+
+Ingredients: {dietary_info[ingredients]}
+Allergens: {dietary_info[allergens]}
+Traces: {dietary_info[traces]}
+Labels: {dietary_info[labels]}
+
+Please provide a comprehensive markdown-formatted analysis including:
+1. Detailed macronutrient and micronutrient evaluation
+2. Health benefits and nutritional value
+3. Environmental impact and sustainability
+4. Allergen and dietary compatibility
+5. Processing level (NOVA) implications
+6. Portion size recommendations
+7. Interactions with health conditions
+8. Alternative suggestions if needed
+9. Lifestyle and health goal alignment
+
+Format the response in less than 400 words with proper markdown headings, lists, and emphasis.
+Include relevant scientific context where appropriate.

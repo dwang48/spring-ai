@@ -3,7 +3,7 @@
 | 1 | **Food-in-image analyzer** | gpt-4o-vision-4.1 | /v1/chat/completions | Real-time (≈3-5 s) | JSON (nutrition block) |
 | 2 | **“Tell us how you feel” coach** | gpt-o4-mini | /v1/chat/completions | On demand | Markdown / plain text or JSON |
 | 3 | **Weekly/Monthly health report** | any GPT-4-class (batch) | /v1/batch (+ /v1/chat/completions) | Weekly cron | PDF / Markdown (embedded JSON) |
-| 4 | Barcode |  |  |  |  |
+| 4 | Barcode | gpt-4.1-mini |  | on demand |plain text+graph  |
 
 # **Setup:**
 

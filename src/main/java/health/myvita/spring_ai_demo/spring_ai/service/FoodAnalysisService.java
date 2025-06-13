@@ -40,6 +40,11 @@ public class FoodAnalysisService {
                 .defaultOptions(OpenAiChatOptions.builder()
                         .model(OpenAiApi.ChatModel.GPT_4_1_MINI.getValue())
                         .temperature(0.1)  // Low temperature for consistent analysis
+                        
+                        //this is for o4 mini, you have to set temperature to 1 and reasoning effort
+                        // .model(OpenAiApi.ChatModel.O4_MINI.getValue())
+                        // .temperature(1.0)
+                        // .reasoningEffort("high")
                         .build())
                 .build();
         

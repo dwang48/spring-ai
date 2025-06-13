@@ -50,8 +50,11 @@ public class HealthCoachService {
         // Configure the chat client for health coaching using GPT-4 mini
         this.chatClient = chatClientBuilder
                 .defaultOptions(OpenAiChatOptions.builder()
-                        .model(OpenAiApi.ChatModel.GPT_4_1_MINI.getValue())
-                        .temperature(0.1)  // Low temperature for consistent analysis
+                        // .model(OpenAiApi.ChatModel.GPT_4_1_MINI.getValue())
+                        // .temperature(0.1)  // Low temperature for consistent analysis
+                        .model(OpenAiApi.ChatModel.O4_MINI.getValue())
+                        .temperature(1.0)
+                        .reasoningEffort("high")
                         .build())
                 .build();
         
