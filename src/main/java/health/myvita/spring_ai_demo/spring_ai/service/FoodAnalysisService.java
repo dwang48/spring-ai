@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import health.myvita.spring_ai_demo.spring_ai.dto.NutritionAnalysisResponse;
+import health.myvita.spring_ai_demo.spring_ai.dto.UserProfileDto;
 
 /**
  * Service for analyzing food images using GPT-4 Vision.
@@ -28,11 +29,31 @@ public class FoodAnalysisService {
     
     // System prompt for food analysis
     private static final String SYSTEM_PROMPT = 
-        "You are a professional nutritionist and food analysis expert. " +
-        "Analyze the food image provided and return a detailed nutritional breakdown. " +
-        "Be as accurate as possible with portion estimates and nutritional values. " +
-        "If you're unsure about specific values, provide reasonable estimates based on " +
-        "typical serving sizes and standard nutritional data.";
+        "You are a professional nutritionist and food analysis expert specializing in visual food identification and nutritional analysis. " +
+        "Your task is to analyze food images with precision and provide comprehensive nutritional data.\n" +
+        "\n" +
+        "CORE RESPONSIBILITIES:\n" +
+        "- Identify each food item in the image with high accuracy\n" +
+        "- Estimate portion sizes based on visual cues and standard serving sizes\n" +
+        "- Calculate nutritional values using USDA/NCCDB standards when possible\n" +
+        "- Provide confidence scores for your identifications\n" +
+        "- Return data in strict JSON format as specified\n" +
+        "\n" +
+        "ANALYSIS GUIDELINES:\n" +
+        "- Consider cooking methods that affect nutritional content\n" +
+        "- Account for visible ingredients and preparation style\n" +
+        "- Use standard portion sizes (e.g., 1 cup rice = ~150g cooked)\n" +
+        "- Be conservative with confidence scores if uncertain\n" +
+        "- Include major micronutrients when identifiable\n" +
+        "- Factor in typical restaurant vs home portions\n" +
+        "\n" +
+        "ACCURACY REQUIREMENTS:\n" +
+        "- Calorie estimates should be within ±20% of actual values\n" +
+        "- Macronutrient ratios must reflect food composition\n" +
+        "- Confidence scores: 0.9+ for obvious items, 0.7+ for likely matches, 0.5+ for uncertain\n" +
+        "- If multiple similar foods possible, choose most common preparation\n" +
+        "\n" +
+        "Always prioritize accuracy over speed. If uncertain about specific values, use conservative estimates and lower confidence scores.";
     
     public FoodAnalysisService(ChatClient.Builder chatClientBuilder) {
         // Configure the chat client for vision analysis using GPT-4o
@@ -55,42 +76,19 @@ public class FoodAnalysisService {
      * Analyzes an uploaded food image and returns nutritional information.
      * 
      * @param imageFile The uploaded food image
+     * @param userProfile User's health profile for personalized analysis
      * @return NutritionAnalysisResponse containing food items and nutritional data
      * @throws Exception if analysis fails
      */
-    public NutritionAnalysisResponse analyzeFood(MultipartFile imageFile) throws Exception {
+    public NutritionAnalysisResponse analyzeFood(MultipartFile imageFile, UserProfileDto userProfile) throws Exception {
         try {
             // Determine mime type (default to image/jpeg if unknown)
             String mimeString = imageFile.getContentType() != null ? imageFile.getContentType() : MimeTypeUtils.IMAGE_JPEG_VALUE;
             // Create media object from the uploaded file
             Media imageMedia = new Media(MimeTypeUtils.parseMimeType(mimeString), imageFile.getResource());
             
-            // Create the analysis prompt
-            String analysisPrompt = 
-                "Analyze this food image and provide a detailed nutritional breakdown. " +
-                "Return your response in the following JSON format:\n" +
-                "{\n" +
-                "  \"foodItems\": [\n" +
-                "    {\n" +
-                "      \"name\": \"food name\",\n" +
-                "      \"quantity\": \"estimated portion size\",\n" +
-                "      \"calories\": estimated_calories,\n" +
-                "      \"confidence\": confidence_score_0_to_1\n" +
-                "    }\n" +
-                "  ],\n" +
-                "  \"totalCalories\": total_estimated_calories,\n" +
-                "  \"macronutrients\": {\n" +
-                "    \"carbohydrates\": grams,\n" +
-                "    \"proteins\": grams,\n" +
-                "    \"fats\": grams,\n" +
-                "    \"fiber\": grams\n" +
-                "  },\n" +
-                "  \"micronutrients\": {\n" +
-                "    \"vitamin_c\": \"amount with unit\",\n" +
-                "    \"iron\": \"amount with unit\",\n" +
-                "    \"calcium\": \"amount with unit\"\n" +
-                "  }\n" +
-                "}";
+            // Create personalized analysis prompt
+            String analysisPrompt = createPersonalizedAnalysisPrompt(userProfile);
             
             // Call the vision model
             String response = chatClient.prompt()
@@ -135,6 +133,74 @@ public class FoodAnalysisService {
             // If parsing fails, return a fallback response
             return createFallbackResponse();
         }
+    }
+    
+    /**
+     * Creates a personalized analysis prompt based on user profile.
+     * 
+     * @param userProfile User's health profile
+     * @return Personalized analysis prompt
+     */
+    private String createPersonalizedAnalysisPrompt(UserProfileDto userProfile) {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("Analyze this food image for a ");
+        if (userProfile != null) {
+            prompt.append(userProfile.getAge() != null ? userProfile.getAge() : "adult")
+                  .append(" year old ")
+                  .append(userProfile.getGender() != null ? userProfile.getGender() : "person");
+            
+            if (userProfile.getWeight() != null && userProfile.getHeight() != null) {
+                prompt.append(" (").append(userProfile.getWeight()).append("kg, ")
+                      .append(userProfile.getHeight()).append("cm)");
+            }
+            
+            prompt.append(" with:\n");
+            prompt.append("Health conditions: ").append(userProfile.getHealthConditionsSafe()).append("\n");
+            prompt.append("Dietary preference: ").append(userProfile.getDietaryPreferenceSafe()).append("\n");
+            prompt.append("Allergies: ").append(userProfile.getAllergiesSafe()).append("\n");
+            prompt.append("Health goals: ").append(userProfile.getHealthGoalsSafe()).append("\n\n");
+        } else {
+            prompt.append("person.\n\n");
+        }
+        
+        prompt.append("Provide a detailed nutritional breakdown with personalized insights. ");
+        prompt.append("Return your response in the following JSON format:\n");
+        prompt.append("{\n");
+        prompt.append("  \"foodItems\": [\n");
+        prompt.append("    {\n");
+        prompt.append("      \"name\": \"food name\",\n");
+        prompt.append("      \"quantity\": \"estimated portion size\",\n");
+        prompt.append("      \"calories\": estimated_calories,\n");
+        prompt.append("      \"confidence\": confidence_score_0_to_1\n");
+        prompt.append("    }\n");
+        prompt.append("  ],\n");
+        prompt.append("  \"totalCalories\": total_estimated_calories,\n");
+        prompt.append("  \"macronutrients\": {\n");
+        prompt.append("    \"carbohydrates\": grams,\n");
+        prompt.append("    \"proteins\": grams,\n");
+        prompt.append("    \"fats\": grams,\n");
+        prompt.append("    \"fiber\": grams\n");
+        prompt.append("  },\n");
+        prompt.append("  \"micronutrients\": {\n");
+        prompt.append("    \"vitamin_c\": \"amount with unit\",\n");
+        prompt.append("    \"iron\": \"amount with unit\",\n");
+        prompt.append("    \"calcium\": \"amount with unit\"\n");
+        prompt.append("  }");
+        
+        if (userProfile != null) {
+            prompt.append(",\n");
+            prompt.append("  \"personalizedInsights\": {\n");
+            prompt.append("    \"healthAlignment\": \"How this meal aligns with user's health goals\",\n");
+            prompt.append("    \"allergenWarnings\": \"Any allergen concerns based on user profile\",\n");
+            prompt.append("    \"portionRecommendation\": \"Recommended portion size for this user\",\n");
+            prompt.append("    \"nutritionalHighlights\": \"Key nutrients beneficial for user's health conditions\"\n");
+            prompt.append("  }");
+        }
+        
+        prompt.append("\n}");
+        
+        return prompt.toString();
     }
     
     /**

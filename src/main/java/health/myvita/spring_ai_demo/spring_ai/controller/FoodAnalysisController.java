@@ -1,7 +1,9 @@
 package health.myvita.spring_ai_demo.spring_ai.controller;
 
 import health.myvita.spring_ai_demo.spring_ai.dto.NutritionAnalysisResponse;
+import health.myvita.spring_ai_demo.spring_ai.dto.UserProfileDto;
 import health.myvita.spring_ai_demo.spring_ai.service.FoodAnalysisService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +21,12 @@ import org.springframework.web.multipart.MultipartFile;
 public class FoodAnalysisController {
     
     private final FoodAnalysisService foodAnalysisService;
+    private final ObjectMapper objectMapper;
     
     @Autowired
     public FoodAnalysisController(FoodAnalysisService foodAnalysisService) {
         this.foodAnalysisService = foodAnalysisService;
+        this.objectMapper = new ObjectMapper();
     }
     
     /**
@@ -36,7 +40,8 @@ public class FoodAnalysisController {
      */
     @PostMapping(value = "/analyze", consumes = "multipart/form-data")
     public ResponseEntity<NutritionAnalysisResponse> analyzeFoodImage(
-            @RequestParam("image") MultipartFile image) {
+            @RequestParam("image") MultipartFile image,
+            @RequestParam("userProfile") String userProfileJson) {
         
         try {
             // Validate file upload
@@ -55,8 +60,18 @@ public class FoodAnalysisController {
                 return ResponseEntity.badRequest().build();
             }
             
+            // Parse user profile from JSON string
+            UserProfileDto userProfile = null;
+            if (userProfileJson != null && !userProfileJson.trim().isEmpty()) {
+                try {
+                    userProfile = objectMapper.readValue(userProfileJson, UserProfileDto.class);
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+            
             // Call the service to analyze the food image
-            NutritionAnalysisResponse response = foodAnalysisService.analyzeFood(image);
+            NutritionAnalysisResponse response = foodAnalysisService.analyzeFood(image, userProfile);
             
             return ResponseEntity.ok(response);
             

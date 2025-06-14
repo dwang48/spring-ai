@@ -1,6 +1,7 @@
 package health.myvita.spring_ai_demo.spring_ai.service;
 
 import health.myvita.spring_ai_demo.spring_ai.dto.HealthCoachResponse;
+import health.myvita.spring_ai_demo.spring_ai.dto.UserProfileDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -26,25 +27,37 @@ public class HealthCoachService {
     
     // System prompt for health coaching - emphasizes safety and evidence-based advice
     private static final String SYSTEM_PROMPT = 
-        "You are a health coach assistant. You provide helpful, evidence-based guidance " +
-        "but you are NOT a doctor and cannot diagnose medical conditions.\n" +
+        "You are an AI health coach assistant with expertise in wellness, nutrition, and lifestyle optimization. " +
+        "You provide compassionate, evidence-based guidance while maintaining clear medical boundaries.\n" +
         "\n" +
-        "Guidelines:\n" +
-        "- Be concise, friendly, and supportive\n" +
-        "- Provide evidence-based suggestions\n" +
-        "- Always recommend consulting healthcare professionals for serious symptoms\n" +
-        "- Focus on lifestyle factors (nutrition, exercise, sleep, stress)\n" +
-        "- Be conservative with urgency levels\n" +
-        "- Never provide specific medical diagnoses\n" +
+        "CORE PRINCIPLES:\n" +
+        "- You are NOT a medical doctor and cannot diagnose conditions or replace professional medical care\n" +
+        "- Focus on evidence-based lifestyle interventions and wellness strategies\n" +
+        "- Prioritize user safety - err on side of caution with health concerns\n" +
+        "- Be empathetic, encouraging, and non-judgmental\n" +
+        "- Provide actionable, practical advice within your scope\n" +
         "\n" +
-        "Respond with structured advice including:\n" +
-        "- Brief summary of the user's situation\n" +
-        "- Possible general causes (lifestyle factors)\n" +
-        "- Practical tips they can try\n" +
-        "- Urgency level: none, low, medium, or high\n" +
+        "RESPONSE STRUCTURE:\n" +
+        "1. Acknowledge their experience with empathy\n" +
+        "2. Provide brief, clear summary of their situation\n" +
+        "3. Suggest evidence-based lifestyle factors that may contribute\n" +
+        "4. Offer 2-3 practical, immediate action steps\n" +
+        "5. Assign appropriate urgency level\n" +
         "\n" +
-        "If symptoms are concerning (persistent, severe, or unusual), always recommend " +
-        "consulting a healthcare professional and set urgency to medium or high.";
+        "URGENCY GUIDELINES:\n" +
+        "- NONE: General wellness questions, minor temporary discomfort\n" +
+        "- LOW: Mild symptoms, lifestyle optimization questions\n" +
+        "- MEDIUM: Persistent symptoms (>1 week), affecting daily life, first-time occurrence\n" +
+        "- HIGH: Severe symptoms, sudden changes, potential emergency signs\n" +
+        "\n" +
+        "SAFETY PROTOCOLS:\n" +
+        "- Always recommend professional consultation for persistent or severe symptoms\n" +
+        "- Never minimize concerning symptoms\n" +
+        "- Provide clear red flags that require immediate medical attention\n" +
+        "- Focus on nutrition, exercise, sleep, stress management, and hydration\n" +
+        "- Avoid specific supplement recommendations without professional guidance\n" +
+        "\n" +
+        "Your goal is to empower users with knowledge while ensuring they seek appropriate professional care when needed.";
     
     public HealthCoachService(ChatClient.Builder chatClientBuilder) {
         // Configure the chat client for health coaching using GPT-4 mini
@@ -65,30 +78,21 @@ public class HealthCoachService {
      * Provides health coaching advice based on user symptoms or concerns.
      * 
      * @param userMessage The user's description of how they feel or their health concerns
+     * @param userProfile User's health profile for personalized advice
      * @return HealthCoachResponse with structured advice and recommendations
      */
-    public HealthCoachResponse provideHealthAdvice(String userMessage) {
+    public HealthCoachResponse provideHealthAdvice(String userMessage, UserProfileDto userProfile) {
         try {
             logger.info("Processing health coaching request");
             logger.debug("User message: {}", userMessage);
             
+            // Create personalized coaching prompt
+            String personalizedPrompt = createPersonalizedCoachingPrompt(userMessage, userProfile);
+            
             // Use the default GPT_4_O_MINI model configured in the constructor
             String response = chatClient.prompt()
                     .system(SYSTEM_PROMPT)
-                    .user(userMessage + "\\n\\nPlease provide your response in a structured format:\\n" +
-                          "\\n" +
-                          "Summary: [Brief summary of what the user is experiencing]\\n" +
-                          "\\n" +
-                          "Possible Causes:\\n" +
-                          "- [Cause 1]\\n" +
-                          "- [Cause 2]\\n" +
-                          "\\n" +
-                          "Tips:\\n" +
-                          "- [Tip 1]\\n" +
-                          "- [Tip 2]\\n" +
-                          "- [Tip 3]\\n" +
-                          "\\n" +
-                          "Urgency: [none/low/medium/high]")
+                    .user(personalizedPrompt)
                     .call()
                     .content();
             
@@ -101,6 +105,53 @@ public class HealthCoachService {
             logger.error("Error providing health advice", e);
             throw new RuntimeException("Failed to provide health advice: " + e.getMessage(), e);
         }
+    }
+    
+    /**
+     * Creates a personalized coaching prompt based on user message and profile.
+     * 
+     * @param userMessage User's health concerns or symptoms
+     * @param userProfile User's health profile
+     * @return Personalized coaching prompt
+     */
+    private String createPersonalizedCoachingPrompt(String userMessage, UserProfileDto userProfile) {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("USER PROFILE:\n");
+        if (userProfile != null) {
+            prompt.append("Age: ").append(userProfile.getAge() != null ? userProfile.getAge() : "Not specified").append("\n");
+            prompt.append("Gender: ").append(userProfile.getGender() != null ? userProfile.getGender() : "Not specified").append("\n");
+            
+            if (userProfile.getWeight() != null && userProfile.getHeight() != null) {
+                prompt.append("Weight: ").append(userProfile.getWeight()).append("kg\n");
+                prompt.append("Height: ").append(userProfile.getHeight()).append("cm\n");
+            }
+            
+            prompt.append("Health conditions: ").append(userProfile.getHealthConditionsSafe()).append("\n");
+            prompt.append("Dietary preference: ").append(userProfile.getDietaryPreferenceSafe()).append("\n");
+            prompt.append("Allergies: ").append(userProfile.getAllergiesSafe()).append("\n");
+            prompt.append("Health goals: ").append(userProfile.getHealthGoalsSafe()).append("\n");
+            prompt.append("Activity level: ").append(userProfile.getActivityLevelSafe()).append("\n\n");
+        } else {
+            prompt.append("Profile not available - provide general guidance\n\n");
+        }
+        
+        prompt.append("USER MESSAGE:\n");
+        prompt.append(userMessage).append("\n\n");
+        
+        prompt.append("Please provide personalized health coaching advice considering their profile. ");
+        prompt.append("Provide your response in a structured format:\n\n");
+        prompt.append("Summary: [Brief summary of what the user is experiencing]\n\n");
+        prompt.append("Possible Causes:\n");
+        prompt.append("- [Cause 1 - consider their health conditions and lifestyle]\n");
+        prompt.append("- [Cause 2 - factor in their age/gender if relevant]\n\n");
+        prompt.append("Tips:\n");
+        prompt.append("- [Tip 1 - personalized to their health goals]\n");
+        prompt.append("- [Tip 2 - consider their dietary preferences/allergies]\n");
+        prompt.append("- [Tip 3 - appropriate for their activity level]\n\n");
+        prompt.append("Urgency: [none/low/medium/high]");
+        
+        return prompt.toString();
     }
     
     /**

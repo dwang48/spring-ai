@@ -1,7 +1,9 @@
 package health.myvita.spring_ai_demo.spring_ai.controller;
 
 import health.myvita.spring_ai_demo.spring_ai.dto.HealthCoachResponse;
+import health.myvita.spring_ai_demo.spring_ai.dto.UserProfileDto;
 import health.myvita.spring_ai_demo.spring_ai.service.HealthCoachService;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -58,7 +60,7 @@ public class HealthCoachController {
             }
             
             // Get advice from the health coach service
-            HealthCoachResponse response = healthCoachService.provideHealthAdvice(request.getMessage());
+            HealthCoachResponse response = healthCoachService.provideHealthAdvice(request.getMessage(), request.getUserProfile());
             
             logger.info("Successfully provided health advice");
             return ResponseEntity.ok(response);
@@ -87,13 +89,20 @@ public class HealthCoachController {
     public static class AdviceRequest {
         private String message;
         
+        @JsonProperty("user_profile")
+        private UserProfileDto userProfile;
+        
         public AdviceRequest() {}
         
-        public AdviceRequest(String message) {
+        public AdviceRequest(String message, UserProfileDto userProfile) {
             this.message = message;
+            this.userProfile = userProfile;
         }
         
         public String getMessage() { return message; }
         public void setMessage(String message) { this.message = message; }
+        
+        public UserProfileDto getUserProfile() { return userProfile; }
+        public void setUserProfile(UserProfileDto userProfile) { this.userProfile = userProfile; }
     }
 } 
